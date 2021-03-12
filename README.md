@@ -8,14 +8,15 @@ Example R code and a work-in-progress R wrapper for Ordnance Survey APIs
 - Copy the 'Project API Key' 
 
 ## Authentication
-Good practice in secure authentication is to set your API credentials as a System Environment variable.
+Good practice in secure authentication is to set your API credentials as a System Environment variable.  
+Replace the 'xxx...' with your copied Project API Key and run this code once.  
 
 `Sys.setenv(OS_PROJECT_API_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxx')`
 
 ## Basic example:
-Leaflet is one of the most popular open-source JavaScript libraries for interactive maps. 
-The 'leaflet' package makes it easy to integrate and control Leaflet maps in R.
-You can bring in OS map tiles by providing a custom URL template to the addTiles() function.
+Leaflet is one of the most popular open-source JavaScript libraries for interactive maps.   
+The 'leaflet' package makes it easy to integrate and control Leaflet maps in R.  
+You can bring in OS map tiles by providing a custom URL template to the addTiles() function.  
 
 ```
 library(leaflet)
