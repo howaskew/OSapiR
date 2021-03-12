@@ -30,7 +30,7 @@ m <- leaflet() %>%
 m  # Print the map
 ```
 
-## Varying map tile styles
+### Varying map tile styles
 
 ```
 #Define url templates for the different tile styles
@@ -56,7 +56,7 @@ m  # Print the map
 ```
 
 
-## Changing the map projection
+### Changing the map projection
 Leaflet expects all point, line, and shape data to be specified in latitude and longitude using WGS 84 (a.k.a. EPSG:4326).   
 By default, when displaying this data it projects everything to EPSG:3857 and expects that any map tiles are also displayed in EPSG:3857.  
 However, you can use custom projections via the integrated Proj4Leaflet plugin.  
