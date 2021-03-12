@@ -98,3 +98,5 @@ m <- leaflet(options=leafletOptions(crs=crs)) %>%
   addMarkers(lng=-1.470770, lat=50.938039, popup="Explorer House, home of Ordnance Survey")
 m  # Print the map
 ```
+## More advanced example:
+
