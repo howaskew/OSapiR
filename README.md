@@ -23,7 +23,6 @@ library(leaflet)
 
 m <- leaflet() %>%
   addTiles(paste0("https://api.os.uk/maps/raster/v1/zxy/Light_3857/{z}/{x}/{y}.png?key=",Sys.getenv("OS_PROJECT_API_KEY"))) %>% 
-  setView(lng=-1.470770, lat=50.938039,zoom=10) %>%
   addMarkers(lng=-1.470770, lat=50.938039, popup="Explorer House, home of Ordnance Survey")
 m  # Print the map
 ```
