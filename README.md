@@ -13,7 +13,7 @@ Replace the 'xxx...' with your copied Project API Key and run this code.
 
 `Sys.setenv(OS_PROJECT_API_KEY = 'xxxxxxxxxxxxxxxxxxxxxxxx')`
 
-Or, add OS_PROJECT_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxx (note no quotes) to your .Renviron file to persist the key between sessions.
+Or, add OS_PROJECT_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxx (note no quotes) to your .Renviron file to persist the key between sessions.  
 See https://bookdown.org/csgillespie/efficientR/set-up.html#r-startup for more info on .Renviron
 
 ## Basic example:
