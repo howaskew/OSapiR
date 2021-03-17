@@ -2,9 +2,10 @@
 Example R code and a work-in-progress R wrapper for Ordnance Survey APIs
 
 ## Sign Up
-- Sign up at https://osdatahub.os.uk/ - free access to OS OpenData APIs.
+- Sign up at https://osdatahub.os.uk/ - free access to OS OpenData APIs and up to £1000 of premium data per calendar month.
 - Create a new project 
-- Add the OS Maps API to your new project
+- Add the OS Maps API to your new project (for the basic and advanced examples below)
+- Add the OS Features API to your project (for the advanced example below - requires access to premium data)
 - Copy the 'Project API Key' 
 
 ## Authentication
@@ -16,7 +17,7 @@ Replace the 'xxx...' with your copied Project API Key and run this code.
 Or, add OS_PROJECT_API_KEY=xxxxxxxxxxxxxxxxxxxxxxxx (note no quotes) to your .Renviron file to persist the key between sessions.  
 See https://bookdown.org/csgillespie/efficientR/set-up.html#r-startup for more info on .Renviron
 
-## Basic example:
+## Basic example: Adding backdrops or base map tiles to leaflet maps 
 Leaflet is one of the most popular open-source JavaScript libraries for interactive maps.   
 The 'leaflet' package makes it easy to integrate and control Leaflet maps in R.  
 You can bring in OS map tiles by providing a custom URL template to the addTiles() function.  
@@ -55,7 +56,6 @@ m <- leaflet() %>%
 m  # Print the map
 ```
 
-
 ### Changing the map projection
 Leaflet expects all point, line, and shape data to be specified in latitude and longitude using WGS 84 (a.k.a. EPSG:4326).   
 By default, when displaying this data it projects everything to EPSG:3857 and expects that any map tiles are also displayed in EPSG:3857.  
@@ -92,11 +92,84 @@ m <- leaflet(options=leafletOptions(crs=crs)) %>%
   addMarkers(lng=-1.470770, lat=50.938039, popup="Explorer House, home of Ordnance Survey")
 m  # Print the map
 
-#Add a max zoom parameter, given the scale limitation for the Leisure tiles 
+#I've added a max zoom parameter here, given the scale limitation for the OpenData Leisure tiles   
 m <- leaflet(options=leafletOptions(crs=crs)) %>%
   addTiles(OSLeisure_27700,options=tileOptions(maxZoom = 5)) %>% 
   addMarkers(lng=-1.470770, lat=50.938039, popup="Explorer House, home of Ordnance Survey")
 m  # Print the map
 ```
-## More advanced example:
+  
+## More advanced example: Show features of a given type within the map bounds 
+The code below creates a simple Shiny web application with an interactive leaflet map.  
+As you move the map around, the app queries the OS Features API for a specific feature type - Airports.  
+These are added to the map as polygons.
+```
+library(shiny) #Interactive R applications
+library(leaflet) #Wrapper for the popular javascript mapping library 
+library(httr) #Functions for working with http
+library(sf) #Functions for handling geospatial data - simple features
 
+#Set custom url template for OS map for backdrop
+OSRoad_3857 <- paste0("https://api.os.uk/maps/raster/v1/zxy/Road_3857/{z}/{x}/{y}.png?key=",Sys.getenv("OS_PROJECT_API_KEY"))
+#Base URL for web feature service
+wfsServiceUrl <- "https://api.os.uk/features/v1/wfs"
+
+#Define app front-end
+ui <- fluidPage(
+  #Style map to fill the screen
+  tags$style(type = "text/css", "#map {height: calc(100vh) !important;}"),
+  #Show the map
+  leafletOutput("map")
+)
+
+#Define app server functions
+server <- function(input, output, session) {
+  
+  #Show the base map
+  output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles(OSRoad_3857) %>% setView(lng=-1.470770, lat=50.938039,zoom=12)
+  })
+
+  #Create a reactive element that updates when the map is moved
+  coords <- reactive(coordinates <- paste0(input$map_bounds$south,",",input$map_bounds$west," ",
+                            input$map_bounds$north,",",input$map_bounds$east))  
+  observe({
+    #When map moves, update the boundary coordinates
+    #Could add a strategy to only search in new bounds areas, but keeping it simple for now
+    if(coords()!=", ,") {
+    #Create an OGC XML filter parameter value which will select features intersecting the bounds coordinates
+    # where the site function equals "Airport" 
+    xml <- paste0('<ogc:Filter>',
+                  '<ogc:And>',
+                  '<ogc:BBOX>',
+                  '<ogc:PropertyName>SHAPE</ogc:PropertyName>',
+                  '<gml:Box srsName="urn:ogc:def:crs:EPSG::4326">',
+                  '<gml:coordinates>',coords(),'</gml:coordinates>',
+                  '</gml:Box>',
+                  '</ogc:BBOX>',
+                  '<ogc:PropertyIsEqualTo>',
+                  '<ogc:PropertyName>SiteFunction</ogc:PropertyName>',
+                  '<ogc:Literal>Airport</ogc:Literal>',
+                  '</ogc:PropertyIsEqualTo>',
+                  '</ogc:And>',
+                  '</ogc:Filter>')
+    #Define (WFS) parameters object.
+    wfsParams <- paste0("key=",Sys.getenv("OS_PROJECT_API_KEY"),
+                        "&service=WFS&request=GetFeature&version=2.0.0&typeNames=Sites_FunctionalSite&outputFormat=GeoJSON&srsName=EPSG:27700",
+                        "&filter=",xml)
+    #Define query url
+    url <-  paste0(wfsServiceUrl,"?",wfsParams)
+    #Query api and convert geojson to spatial features 
+    sf <- read_sf(GET(url),crs=27700,as_tibble=F)
+    #Set CRS for standard web mapping (convert from national grid to degrees)
+    sfw <- st_transform(sf,4326)
+    #Finally update map
+    leafletProxy("map") %>% clearShapes() %>% addPolygons(data=sfw)
+    }
+  })
+}
+
+#Launch the app
+shinyApp(ui, server)
+```
